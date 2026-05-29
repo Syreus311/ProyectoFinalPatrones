@@ -1,6 +1,6 @@
 # Banco A - Proyecto CQRS
 
-#Katherin Juliana Moreno Carvajal & Mariana Salas Gutierrez
+Katherin Juliana Moreno Carvajal & Mariana Salas Gutierrez
 
 Sistema académico para demostrar una arquitectura CQRS con:
 
