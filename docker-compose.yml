@@ -1,0 +1,111 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: banco_postgres
+    environment:
+      POSTGRES_DB: banco_a
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./init-db:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d banco_a"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  mongo:
+    image: mongo:7
+    container_name: banco_mongo
+    ports:
+      - "27017:27017"
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh --quiet --eval 'db.adminCommand({ ping: 1 }).ok' | grep 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  write-service:
+    build: ./write-service
+    container_name: banco_write_service
+    environment:
+      PORT: 3001
+      PG_HOST: postgres
+      PG_PORT: 5432
+      PG_DATABASE: banco_a
+      PG_USER: admin
+      PG_PASSWORD: admin
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "3001:3001"
+    restart: unless-stopped
+
+  read-service:
+    build: ./read-service
+    container_name: banco_read_service
+    environment:
+      PORT: 3002
+      MONGO_URL: mongodb://mongo:27017
+      MONGO_DATABASE: banco_a_read
+    depends_on:
+      mongo:
+        condition: service_healthy
+    ports:
+      - "3002:3002"
+    restart: unless-stopped
+
+  sync-worker:
+    build: ./sync-worker
+    container_name: banco_sync_worker
+    environment:
+      PG_HOST: postgres
+      PG_PORT: 5432
+      PG_DATABASE: banco_a
+      PG_USER: admin
+      PG_PASSWORD: admin
+      MONGO_URL: mongodb://mongo:27017
+      MONGO_DATABASE: banco_a_read
+      SYNC_DELAY_SECONDS: 10
+      POLL_INTERVAL_MS: 1000
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mongo:
+        condition: service_healthy
+    restart: unless-stopped
+
+  kong:
+    image: kong:3.7
+    container_name: banco_kong
+    environment:
+      KONG_DATABASE: "off"
+      KONG_DECLARATIVE_CONFIG: /kong/declarative/kong.yml
+      KONG_PROXY_ACCESS_LOG: /dev/stdout
+      KONG_ADMIN_ACCESS_LOG: /dev/stdout
+      KONG_PROXY_ERROR_LOG: /dev/stderr
+      KONG_ADMIN_ERROR_LOG: /dev/stderr
+      KONG_ADMIN_LISTEN: 0.0.0.0:8001
+    volumes:
+      - ./kong/kong.yml:/kong/declarative/kong.yml
+    depends_on:
+      - write-service
+      - read-service
+    ports:
+      - "8000:8000"
+      - "8001:8001"
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    container_name: banco_frontend
+    environment:
+      VITE_API_BASE_URL: http://localhost:8000
+    depends_on:
+      - kong
+    ports:
+      - "5173:5173"
+    restart: unless-stopped

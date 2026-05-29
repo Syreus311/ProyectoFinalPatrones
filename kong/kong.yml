@@ -1,0 +1,34 @@
+_format_version: "3.0"
+
+services:
+  - name: write-service
+    url: http://write-service:3001
+    routes:
+      - name: write-service-routes
+        paths:
+          - /api/commands
+        strip_path: true
+
+  - name: read-service
+    url: http://read-service:3002
+    routes:
+      - name: read-service-routes
+        paths:
+          - /api/queries
+        strip_path: true
+
+plugins:
+  - name: cors
+    config:
+      origins:
+        - http://localhost:5173
+      methods:
+        - GET
+        - POST
+        - OPTIONS
+      headers:
+        - Accept
+        - Authorization
+        - Content-Type
+      credentials: true
+      max_age: 3600

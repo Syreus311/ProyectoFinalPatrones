@@ -1,0 +1,20 @@
+#!/bin/bash
+echo "🏦 Banco A — CQRS Demo"
+echo "Levantando todos los servicios..."
+docker compose down -v 2>/dev/null
+docker compose up --build -d
+echo ""
+echo "✅ Servicios listos:"
+echo "  Frontend  →  http://localhost:5173"
+echo "  Kong      →  http://localhost:8000"
+echo "  Kong Admin → http://localhost:8001"
+echo ""
+echo "📖 Rutas Kong:"
+echo "  POST  /api/commands/transfers              → Write Service (PostgreSQL)"
+echo "  GET   /api/commands/debug/sql/transfers/:id → Consulta directa SQL"
+echo "  GET   /api/queries/transfers               → Read Service (MongoDB)"
+echo "  GET   /api/queries/transfers/:id           → Consulta por ID en MongoDB"
+echo ""
+echo "⏱  El Sync Worker sincroniza PostgreSQL → MongoDB cada 10 segundos."
+echo "   Al crear una transferencia, consulta primero en NoSQL — no estará."
+echo "   Espera ~10s y vuelve a consultar — ya estará. Eso es consistencia eventual."
