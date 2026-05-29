@@ -1,6 +1,6 @@
-# Banco A - Proyecto CQRS
+**Nombres:** Katherin Juliana Moreno Carvajal, Mariana Salas Gutierrez
 
-Katherin Juliana Moreno Carvajal & Mariana Salas Gutierrez
+# Banco A - Proyecto CQRS
 
 Sistema académico para demostrar una arquitectura CQRS con:
 
@@ -11,7 +11,11 @@ Sistema académico para demostrar una arquitectura CQRS con:
 - Kong como API Gateway.
 - UI en React.
 
-## Arquitectura
+## 1. Video
+
+[https://canva.link/g16runp0e09f5xc](https://canva.link/g16runp0e09f5xc)
+
+## 2. Arquitectura
 
 ```txt
 UI React
@@ -27,7 +31,7 @@ Sync Worker:
 PostgreSQL Outbox ---> espera 30 segundos ---> MongoDB
 ```
 
-## Cómo ejecutar
+## 3. ¿Cómo ejecutar?
 
 Desde la carpeta raíz del proyecto:
 
@@ -41,7 +45,7 @@ Luego abre:
 http://localhost:5173
 ```
 
-## Puertos
+## 4. Puertos
 
 | Componente | Puerto |
 |---|---|
@@ -53,7 +57,7 @@ http://localhost:5173
 | PostgreSQL | 5432 |
 | MongoDB | 27017 |
 
-## Flujo de demostración
+## 5. Flujo de demostración
 
 1. Crear una transferencia desde la UI.
 2. Consultar SQL: la transferencia debe aparecer inmediatamente.
@@ -61,7 +65,7 @@ http://localhost:5173
 4. Esperar aproximadamente 30 segundos.
 5. Consultar NoSQL otra vez: la transferencia ya debe aparecer.
 
-## Endpoints vía Kong
+## 6. Endpoints vía Kong
 
 Crear transferencia:
 
@@ -89,7 +93,7 @@ Consultar una transferencia específica en SQL:
 curl http://localhost:8000/api/commands/debug/sql/transfers/ID_DE_LA_TRANSFERENCIA
 ```
 
-## Ajustar el gap de sincronización
+## 7. Ajustar el gap de sincronización
 
 En `docker-compose.yml`, cambia esta variable del `sync-worker`:
 
@@ -99,7 +103,7 @@ SYNC_DELAY_SECONDS: 30
 
 Para la sustentación se recomienda dejarlo entre 25 y 45 segundos. Así se puede ver que al inicio MongoDB no está sincronizado, pero luego sí.
 
-## Comandos
+## 8. Comandos
 
 Ver logs del worker:
 
@@ -145,6 +149,6 @@ use banco_a_read
 db.transfers.find().pretty()
 ```
 
-## Explicación técnica
+## 9. Explicación técnica
 
 El sistema usa CQRS porque separa los comandos de escritura y las consultas de lectura. Las transferencias se registran en PostgreSQL para garantizar ACID. Las consultas se hacen desde MongoDB para tener un modelo de lectura optimizado. La sincronización se realiza de forma asíncrona usando una tabla `outbox_events` y un `sync-worker`. Por eso, justo después de crear una transferencia, esta existe en SQL pero aún no necesariamente aparece en MongoDB. Después del delay configurado, el worker actualiza MongoDB y se observa la consistencia eventual.
